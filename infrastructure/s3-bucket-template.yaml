@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Weather Dashboard S3 Bucket for Static Website Hosting'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: weather-dashboard
+    Description: Project name for resource naming
+  
+  BucketName:
+    Type: String
+    Description: S3 bucket name (must be globally unique)
+
+Resources:
+  # S3 Bucket for Static Website
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # S3 Bucket Policy for Public Read Access
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Sub '${WebsiteBucket.Arn}/*'
+
+Outputs:
+  WebsiteURL:
+    Description: S3 Website URL
+    Value: !GetAtt WebsiteBucket.WebsiteURL
+    Export:
+      Name: !Sub '${ProjectName}-website-url'
+  
+  BucketName:
+    Description: S3 Bucket Name
+    Value: !Ref WebsiteBucket
+    Export:
+      Name: !Sub '${ProjectName}-bucket-name'
+  
+  BucketArn:
+    Description: S3 Bucket ARN
+    Value: !GetAtt WebsiteBucket.Arn
+    Export:
+      Name: !Sub '${ProjectName}-bucket-arn'
